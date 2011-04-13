@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include <signal.h>
 typedef void (*sighandler_t)(int);
@@ -12,6 +13,30 @@ typedef void (*sighandler_t)(int);
 #include <errno.h>
 
 #include "power.h"
+
+// options
+int opt_is_verbose = 0;
+int opt_is_extended = 0;
+
+
+int get_options(int argc, char **argv) {
+  int flags, opt;
+  flags = 0;
+  while ((opt = getopt(argc, argv, "v-")) != -1) {
+    switch (opt) {
+      case 'v':
+        opt_is_verbose = 1;
+        break;
+      case '-':
+        return opt;
+      default: /* '?' */
+        fprintf(stderr, "Usage: %s [-t nsecs] [-n] name\n",
+              argv[0]);
+        exit(EXIT_FAILURE);
+    }
+  }
+  return opt;
+}
 
 void init_counters(infos_t *infos) {
   infos->nb_cpus = sysconf( _SC_NPROCESSORS_ONLN );
@@ -79,6 +104,26 @@ static void run_command (char *const *cmd, infos_t *infos) {
   signal (SIGQUIT, quit_signal);
 }
 
+void print_total_energy(infos_t *infos) {
+  int cpu_id;
+  printf("Total energy consumption: \n");
+  for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
+    long total_joules = 0;
+    // time in idle
+    total_joules += CSTATE_IN_MS(infos->cstates_total[cpu_id]) * ST_10_IDLE / 1000;
+    // time at low freq but not idle
+    long rest = PSTATE_IN_MS(infos->time_in_freq_beg[cpu_id][2].time) - CSTATE_IN_MS(infos->cstates_total[cpu_id]);
+    if (rest > 0) {
+      total_joules += rest * ST_10_RUN / 1000;
+    }
+    total_joules += PSTATE_IN_MS(infos->time_in_freq_beg[cpu_id][1].time) * ST_13_RUN / 1000;
+    total_joules += PSTATE_IN_MS(infos->time_in_freq_beg[cpu_id][0].time) * ST_18_RUN / 1000;
+    printf ("  CPU %d: %ld joules\n", cpu_id, total_joules);
+  }
+
+}
+
+
 void print_infos(infos_t *infos) {
   unsigned long r;		/* Elapsed real milliseconds.  */
   unsigned long v;		/* Elapsed virtual (CPU) milliseconds.  */
@@ -117,6 +162,7 @@ void print_infos(infos_t *infos) {
         infos->time_elapsed.tv_usec / 10000);
   printf("\n");
 
+  printf("\nMore info\n");
   /* Percent of CPU this job got.  */
   /* % cpu is (total cpu time)/(time_elapsed time).  */
   printf("CPU usage: ");
@@ -144,6 +190,8 @@ void print_infos(infos_t *infos) {
         infos->time_elapsed.tv_sec,
         infos->time_elapsed.tv_usec / 10000);
   printf("\n");
+  
+  print_total_energy(infos);
   print_cstates(infos);
   print_freqs(infos);
 
@@ -154,7 +202,7 @@ void main (int argc, char **argv) {
 
   infos_t infos;
 
-  //command_line = getargs (argc, argv);
+//  int nb_args = get_options (argc, argv);
   run_command (&argv[1], &infos);
   //  summarize (outfp, output_format, command_line, &res);
   //  fflush (outfp);

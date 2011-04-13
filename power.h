@@ -9,6 +9,18 @@
 #define SYSFS_PATH_MAX 255
 #define MAX_CSTATE_NAME 255
 
+#define PSTATE_IN_MS(x) (x*10)
+#define CSTATE_IN_MS(x) (x/1000)
+
+
+#define ST_18_RUN  31
+#define ST_18_IDLE 15
+#define ST_13_RUN  25
+#define ST_13_IDLE 10
+#define ST_10_RUN  13.1
+#define ST_10_IDLE 4
+
+
 #define MAX_FREQ_NB 8
 
 typedef struct {
@@ -37,8 +49,9 @@ typedef struct {
   unsigned long long *cstates_total;
   cstate_stat_t *cstate_stat_beg, *cstate_stat_end;
   
+  int nb_freqs;
   unsigned long long *freqs_total;
-  time_in_freq_t *time_in_freq_beg, *time_in_freq_end;
+  time_in_freq_t **time_in_freq_beg, **time_in_freq_end;
 } infos_t;
 
 // cstates functions

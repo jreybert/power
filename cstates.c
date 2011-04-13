@@ -107,10 +107,11 @@ void print_cstates(infos_t *infos) {
   printf("** C-States: **\n");
   int cpu_id;
   for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
-    printf("   CPU %d: total %lld ticks\n", cpu_id, infos->cstates_total[cpu_id]);
+    printf("   CPU %d: total %lld ms - %.2f%% in idle\n", cpu_id, CSTATE_IN_MS(infos->cstates_total[cpu_id]), (100.0 * CSTATE_IN_MS(infos->cstates_total[cpu_id]) / PSTATE_IN_MS(infos->freqs_total[cpu_id])));
     int pos;
     for (pos = 0; pos < infos->nb_states; pos++) {
-      printf("     %5s: %.2f%% - %lld ticks - %ld\n", infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].name, (100.0 * infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].time) / infos->cstates_total[cpu_id], infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].time, infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].usage);
+      //printf("     %5s: %.2f%% - %lld ms - %ld\n", infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].name, (100.0 * infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].time) / infos->cstates_total[cpu_id], infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].time / CSTATE_IN_MS, infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].usage);
+      printf("     %5s: %.2f%% - %lld ms\n", infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].name, (100.0 * infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].time) / infos->cstates_total[cpu_id], CSTATE_IN_MS(infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].time) );
     }
   }
 }
