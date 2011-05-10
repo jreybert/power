@@ -77,6 +77,18 @@ void init_cstates(infos_t *infos) {
   memset(infos->cstates_total, 0, infos->nb_cpus * sizeof(unsigned long long) );
   infos->cstate_stat_beg = malloc( infos->nb_cpus * infos->nb_states * sizeof(cstate_stat_t) );
   infos->cstate_stat_end = malloc( infos->nb_cpus * infos->nb_states * sizeof(cstate_stat_t) );
+  infos->cstate_trace_beg = malloc( infos->nb_cpus * infos->nb_states * sizeof(cstate_stat_t) );
+  infos->cstate_trace_end = malloc( infos->nb_cpus * infos->nb_states * sizeof(cstate_stat_t) );
+}
+
+void refresh_cstates_trace(infos_t *infos) {
+  cstate_stat_t *tmp = infos->cstate_trace_beg;
+  infos->cstate_trace_beg = infos->cstate_trace_end;
+  infos->cstate_trace_end = tmp; 
+  int cpu_id;
+  for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
+    get_cstate_stats(cpu_id, infos->nb_states, &infos->cstate_trace_end[cpu_id*infos->nb_states]);
+  }
 }
 
 void start_cstates(infos_t *infos) {

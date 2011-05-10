@@ -9,8 +9,8 @@
 #define SYSFS_PATH_MAX 255
 #define MAX_CSTATE_NAME 255
 
-#define PSTATE_IN_MS(x) (x*10)
-#define CSTATE_IN_MS(x) (x/1000)
+#define PSTATE_IN_MS(x) ( (x)*10)
+#define CSTATE_IN_MS(x) ( (x)/1000)
 
 
 #define ST_18_RUN  31
@@ -48,20 +48,29 @@ typedef struct {
   int nb_states;
   unsigned long long *cstates_total;
   cstate_stat_t *cstate_stat_beg, *cstate_stat_end;
+  cstate_stat_t *cstate_trace_beg, *cstate_trace_end;
   
   int nb_freqs;
   unsigned long long *freqs_total;
   time_in_freq_t **time_in_freq_beg, **time_in_freq_end;
+  time_in_freq_t **time_in_freq_trace_beg, **time_in_freq_trace_end;
 } infos_t;
+
+// Trace functions
+int start_tracing(infos_t *infos);
+int stop_tracing();
 
 // cstates functions
 void init_cstates(infos_t *infos);
+void refresh_cstates_trace(infos_t *infos);
 void start_cstates(infos_t *infos);
 void finish_cstates(infos_t *infos);
 void print_cstates(infos_t *infos);
 
+
 // freqs functions
 void init_freqs(infos_t *infos);
+void refresh_freqs_trace(infos_t *infos);
 void start_freqs(infos_t *infos);
 void finish_freqs(infos_t *infos);
 void print_freqs(infos_t *infos);

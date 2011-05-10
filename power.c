@@ -48,6 +48,7 @@ int start_counters(infos_t *infos) {
   init_counters(infos);
   start_cstates(infos);
   start_freqs(infos);
+  start_tracing(infos);
   gettimeofday (&infos->time_start, (struct timezone *) 0);  
 }
 
@@ -62,6 +63,7 @@ int end_counters(pid_t pid, infos_t *infos) {
   }
   finish_cstates(infos);
   finish_freqs(infos);
+  stop_tracing();
   gettimeofday (&infos->time_elapsed, (struct timezone *) 0);
   infos->time_elapsed.tv_sec -= infos->time_start.tv_sec;
   if (infos->time_elapsed.tv_usec < infos->time_start.tv_usec)

@@ -86,13 +86,27 @@ void init_freqs(infos_t *infos) {
   memset(infos->freqs_total, 0, infos->nb_cpus * sizeof(unsigned long long) );
   infos->time_in_freq_beg = malloc( infos->nb_cpus * sizeof(time_in_freq_t*) );
   infos->time_in_freq_end = malloc( infos->nb_cpus * sizeof(time_in_freq_t*) );
+  infos->time_in_freq_trace_beg = malloc( infos->nb_cpus * sizeof(time_in_freq_t*) );
+  infos->time_in_freq_trace_end = malloc( infos->nb_cpus * sizeof(time_in_freq_t*) );
   int cpu_id ;
   for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
     infos->time_in_freq_beg[cpu_id] = malloc( infos->nb_freqs * sizeof(time_in_freq_t) );
     infos->time_in_freq_end[cpu_id] = malloc( infos->nb_freqs * sizeof(time_in_freq_t) );
+    infos->time_in_freq_trace_beg[cpu_id] = malloc( infos->nb_freqs * sizeof(time_in_freq_t) );
+    infos->time_in_freq_trace_end[cpu_id] = malloc( infos->nb_freqs * sizeof(time_in_freq_t) );
   }
   //memset(infos->time_in_freq_beg, 0, infos->nb_cpus * infos->nb_freqs  * sizeof(time_in_freq_t) );
   //memset(infos->time_in_freq_end, 0, infos->nb_cpus * infos->nb_freqs  * sizeof(time_in_freq_t) );
+}
+
+void refresh_freqs_trace(infos_t *infos) {
+  time_in_freq_t **tmp = infos->time_in_freq_trace_beg;
+  infos->time_in_freq_trace_beg = infos->time_in_freq_trace_end;
+  infos->time_in_freq_trace_end = tmp;
+  int cpu_id;
+  for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
+    get_freq_stats(cpu_id, infos->time_in_freq_trace_end[cpu_id]);
+  }
 }
 
 void start_freqs(infos_t *infos) {

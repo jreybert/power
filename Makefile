@@ -1,7 +1,7 @@
 
 CC=gcc 
 CFLAGS=-g -I.
-LDFLAGS=
+LDFLAGS=-lpthread
 
 #SRC=power.c cstates.c freq.c
 #OBJS=
@@ -15,7 +15,7 @@ all: power
 objects := $(patsubst %.c,%.o,$(wildcard *.c))
 
 power: $(objects)
-	$(CC) -o $@ $(objects)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(objects)
 
 
 .PHONY: clean
