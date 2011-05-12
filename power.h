@@ -12,6 +12,9 @@
 #define PSTATE_IN_MS(x) ( (x)*10)
 #define CSTATE_IN_MS(x) ( (x)/1000)
 
+#define WATT_MAX_FREQ 31
+#define WATT_MIN_FREQ 13
+#define WATT_IDLE     4
 
 #define ST_18_RUN  31
 #define ST_18_IDLE 15

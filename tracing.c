@@ -1,5 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/time.h>
 
@@ -7,12 +8,19 @@
 
 #include "power.h"
 
+double WATT_FREQ[3] = {  31.,
+                      18.,
+                      13.
+};
+
 static volatile int tracing;
 
 pthread_t tid;
 FILE *trace;
 struct timeval start_time;
 
+// ugly, temp variable, but don't want to malloc each time
+double *time_in_freq;
 
 infos_t *infos;
 
@@ -44,21 +52,41 @@ static void * energy_tracing(void *arg) {
     gettimeofday(&curr_time, NULL);
     fprintf(trace, "%f ", TDIFF(curr_time, start_time));
     for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
-      double total_joules = 0;
+      double total_watt = 0;
       double total_time_cstate = 0;
+      double total_time = 0;
       for (state = 0; state < infos->nb_states; state++) {
         total_time_cstate += infos->cstate_trace_end[cpu_id*infos->nb_states+state].time - infos->cstate_trace_beg[cpu_id*infos->nb_states+state].time;
       }
-      // time in idle
-      total_joules += CSTATE_IN_MS(total_time_cstate) * ST_10_IDLE / 1000;
-      // time at low freq but not idle
-      double rest = PSTATE_IN_MS(infos->time_in_freq_trace_end[cpu_id][2].time - infos->time_in_freq_trace_beg[cpu_id][2].time) - CSTATE_IN_MS(total_time_cstate);
-      if (rest > 0) {
-        total_joules += rest * ST_10_RUN / 1000;
+      total_time_cstate = CSTATE_IN_MS(total_time_cstate);
+
+      for (state = 0; state < infos->nb_freqs; state++) {
+        time_in_freq[state] = PSTATE_IN_MS(infos->time_in_freq_trace_end[cpu_id][state].time - infos->time_in_freq_trace_beg[cpu_id][state].time);
+        total_time += time_in_freq[state];
       }
-      total_joules += PSTATE_IN_MS(infos->time_in_freq_trace_end[cpu_id][1].time - infos->time_in_freq_trace_beg[cpu_id][1].time) * ST_13_RUN / 1000;
-      total_joules += PSTATE_IN_MS(infos->time_in_freq_trace_end[cpu_id][0].time - infos->time_in_freq_trace_beg[cpu_id][0].time) * ST_18_RUN / 1000;
-      fprintf(trace, "%f ", total_joules);
+      double tmp_cstate = total_time_cstate;
+      state = infos->nb_freqs - 1;
+      while ( tmp_cstate > 0 ) {
+        if (state < 0) {
+          fprintf(stderr, "Problem while subing cstate time from freqs time, %s %d\n", __FILE__, __LINE__);
+          break;
+        }
+        double tmp_time = time_in_freq[state];
+        time_in_freq[state] = time_in_freq[state] - tmp_cstate;
+        if (time_in_freq[state] < 0)
+          time_in_freq[state] = 0;
+        tmp_cstate = tmp_cstate - tmp_time;
+        state--;
+      }
+      
+      total_watt = total_time_cstate / total_time * WATT_IDLE;
+
+      for (state = 0; state < infos->nb_freqs; state++) {
+        total_watt += time_in_freq[state] / total_time * WATT_FREQ[state];
+//        fprintf(trace, "(%f/%f*%f) ", time_in_freq[state], total_time, WATT_FREQ[state]);
+      }
+
+      fprintf(trace, "%f ", total_watt);
     }
     fprintf(trace, "\n");
 
@@ -67,6 +95,7 @@ static void * energy_tracing(void *arg) {
 }
 
 int start_tracing(infos_t *_infos) {
+  time_in_freq = malloc(_infos->nb_freqs * sizeof(double));
   gettimeofday(&start_time, NULL);  
   infos = _infos;
   tracing = 1;
