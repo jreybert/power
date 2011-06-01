@@ -1,0 +1,23 @@
+
+GCC=gcc -g 
+
+all: mull-unopt
+
+mull-unopt: mull-unopt.c 
+	$(GCC) -o $@ $<
+
+<<<<<<< HEAD
+.PHONY: vtune-unopt-hotspot vtune-unopt-cache
+
+vtune-unopt-hotspot: mull-unopt
+	mkdir -p $@
+=======
+.PHONY: vtune-unopt-hotspot vtune-unopt-cache 
+	 
+vtune-unopt-hotspot: mull-unopt 
+	mkdir -p $@ 
+>>>>>>> ce059dba6e9f1e03aa40a07168cf892f8c7b96a7
+	amplxe-cl --collect hotspots -follow-child -target-duration-type=long -allow-multiple-runs -no-analyze-system -data-limit=100 -slow-frames-threshold=40 -fast-frames-threshold=100 -- /home/jreybert/mentors/src/cache/mull-unopt
+
+vtune-unopt-cache: mull-unopt
+	amplxe-cl --collect nehalem_memory-access -follow-child -target-duration-type=short -no-allow-multiple-runs -no-analyze-system -data-limit=100 -slow-frames-threshold=40 -fast-frames-threshold=100 -- /home/jreybert/mentors/src/cache2/mull-unopt

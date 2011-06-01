@@ -1,0 +1,104 @@
+﻿ CONTENTS
+
+ Burn-In/Soak Test Apps  - intburn, burninsse, drivestress, cudamflops
+                           and lloops
+
+ bin_32_and_64 directory - Apps compiled as 32-Bits to run via 32-Bit
+                           or 64-Bit Linux
+
+                         - Apps compiled as 64-Bits to run via 64-Bit Linux
+                           only
+
+                         - also included are script files that can run the 
+                           programs via a mouse click. 
+
+ source_code directory   - C benchmarks with options to select 32 or 64 bit
+                           operation, common code for configuration details 
+                           and README file with details of commands to be 
+                           used to compile and link the programs. 
+
+
+ DESCRIPTION
+
+ IntBurn
+
+ IntBurn has twelve tests, adding and subtracting different data patterns.
+ The first six tests alternately write and read data and the others are 
+ read only. The results are checked for correct calculations. Parameters 
+ are available for data size in KBytes, log file number and elapsed time 
+ per test in seconds. As with BurnSSE the data size determines whether
+ caches or RAM is used in data transfer. Multiple copies, with appropriate
+ parameters, can use all RAM and force swapping out to disk.
+
+ BurnInSSE
+
+ BurnInSSE is based on the OpenMP benchmark (see below), where the program
+ compiled without OpenMP directives ran very fast, due to the GCC compiler 
+ generating optimised code using SSE instructions. Here, the arithmetic 
+ operations are executed  with 2, 8 or 32 operations per data word with 
+ section parameter 1, 2 and 3 respectively, the latter being the default.
+ There are also parameters for KWords, log file number and running time
+ in minutes.
+
+ DriveStress
+
+ The default versions write four files, using 164 blocks of 64 KB (10.25 MB),
+ with each block containing a unique data pattern. The files are then read 
+ for two minutes, on a sort of random sequence, with data and file ID checked
+ for correct values. Using modern disk drives, with read ahead, data transfer
+ speed will be maintained by reading from the disk’s buffer. Finally, each
+ block is read repetitively from one file for one second at maximum bus speed
+ from the buffer. In order to maintain fast data transfer, values are checked
+ every 20 passes. Run time parameters are available to use larger file sizes,
+ file reading minutes, block reading seconds, log file number and data file
+ path.
+
+ CUDAMflops
+
+ The benchmarks measure floating point speeds in Millions of Floating Point
+ Operations Per Second (MFLOPS). They demonstrates some best and worst case
+ performance using varying data array size and increasing processing
+ instructions per data access. There are five scenarios - New Calculations
+ with data in and out, Update Data with just data out, Graphics Only Data
+ using only graphics RAM and two extra tests with lower overheads. The tests
+ are run at three different data sizes, defaults 100,000 words repeated
+ 2500 times, 1M words 250 times and 10M words 25 times. The arithmetic
+ operations executed are of the form x[i] = (x[i] + a) * b - (x[i] + c) * d
+ + (x[i] + e) * f with 2, 8 or 32 adds or subtracts and multiplies on each
+ data element. The Extra Tests are only run using 10M words repeated 25 times. 
+ The soak test normally runs the Extra Tests at 32 operations per word for a
+ defined number of minutes.
+
+ See  http://www.roylongbottom.org.uk/linux_cuda_mflops.htm
+
+ Lloops
+
+ The Livermore Loops benchmark has 24 test kernels, each run three times at
+ different data sizes to produce identified results of calculations. In 
+ Reliability Mode, each test is executed for a specified number of seconds.
+  
+ See http://www.roylongbottom.org.uk/#anchorBenchNT
+
+ 
+ Also see http://www.roylongbottom.org.uk/linux%20benchmarks.htm
+
+
+
+ INSTRUCTIONS
+
+ With Terminal pointing to the directory containing the execution  files,
+ each benchmark program can be run using the usual ./program_name command.
+ Subject to permissions, they can also be run by clicking on suitable run
+ script files. Example scripts are provides to run two copies of tests at
+ the same time and a runalot script to run batches of four tests for an
+ extended burn-in test. Results will be displayed and saved in unique .txt
+ files.
+
+ 
+ Please send results on different varieties of Linux and/or different hardware
+ to:
+
+ roy@roylongbottom.org.uk
+
+ Roy Longbottom
+ April 2011

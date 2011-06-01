@@ -1,0 +1,17 @@
+ Instructions 
+ 
+ Copy intburn.c, cpuidc64.c, cpuidh.h and int64.asm 
+ to a new folder.
+
+ Assemble the common code using the following command in 
+ Terminal pointing to the new folder to produce int64.o: 
+
+ nasm -f elf64 -g -F stabs int64.asm    
+
+ Then compile and link using the following command 
+
+ gcc intburn.c cpuidc64.c  int64.o -m64 -lrt -lc -lm -O3 -o intburn64
+
+ Execute using ./intburn64
+ Results should be displayed and saved in burnlog0.txt.
+

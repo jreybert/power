@@ -1,0 +1,17 @@
+ Instructions 
+ 
+ Copy intburn32.c, cpuidc.c, cpuidh.h and int32.asm 
+ to a new folder.
+
+ Assemble the common code using the following command in 
+ Terminal pointing to the new folder to produce int32.o: 
+
+ nasm -f elf int32.asm     
+
+ Then compile and link using the following command 
+
+ gcc intburn32.c cpuidc.c  int32.o -lrt -lc -lm -O3 -o intburn32
+
+ Execute using ./intburn32
+ Results should be displayed and saved in burnlog0.txt.
+

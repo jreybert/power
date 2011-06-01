@@ -1,0 +1,90 @@
+ Instructions 32 Bit Versions BURNINSSE and DRIVETEST
+ 
+ Copy C or CPP to a new folder and the following
+ cpuida.o, cpuidc.o and cpuidh.h from common_32bit.
+
+ BURNINSSE
+
+ Lines 17 to 20 in C change comments to use 
+
+ char   compiler[80] = "                Via Ubuntu 32 Bit Compiler";
+ char   heading[40]  = "32 Bit MFLOPS Burn-In Test 1.0";
+
+ Compile and link using the following command in 
+ Terminal pointing to the new folder.
+
+ gcc burninsse.c cpuidc.o cpuida.o -lrt -lc -lm -msse -O3 -o burninsse32
+
+ Execute using ./burninsse32
+ Results should be displayed and saved in log0.txt.
+
+
+ DRIVETEST
+
+ Lines 29 to 30 in CPP change comments to use 
+
+ char   version[30] = "32-Bit Version 1.1";
+
+ Compile and link using the following command in 
+ Terminal pointing to the new folder.
+
+ g++ drivetest.cpp cpuidc.o cpuida.o -lrt -lc -lm -O3 -o drivestress32
+
+ Execute using  ./drivestress32
+
+
+
+ Instructions 64 Bit Versions BURNINSSE and DRIVETEST
+
+ Copy CPP to a new folder and the following
+ cpuida.o, cpuidc.o and cpuidh.h from common_64bit.
+
+ BURNINSSE
+
+ Lines 17 to 20 in C change comments to use 
+
+ char   compiler[80] = "                Via Ubuntu 64 Bit Compiler";
+ char   heading[40]  = "64 Bit MFLOPS Burn-In Test 1.0";
+
+ Compile and link using the following command in 
+ Terminal pointing to the new folder.
+
+ gcc burninsse.c cpuidc64.o cpuida64.o -m64 -lrt -lc -lm -O3 -o burninsse64
+
+ Execute using ./burninsse64
+ Results should be displayed and saved in IOStress0.txt.
+
+ 
+ DRIVETEST
+
+ Lines 29 to 30 in CPP change comments to use 
+
+ char   version[30] = "64-Bit Version 1.1";
+
+ Compile and link using the following command in 
+ Terminal pointing to the new folder.
+
+ g++ drivetest.cpp cpuidc64.o cpuida64.o -m64 -lrt -lc -lm -O3 -o drivestress64
+
+ Execute using ./drivestress64
+ Results should be displayed and saved in IOStress0.txt.
+
+
+ INTBURN programs use assembly code with a variation of CPUID functions
+ See intburn32 and intburn64 folders.
+
+ LLOOPS source code see
+ http://www.roylongbottom.org.uk/classic_benchmarks.tar.gz
+
+
+ CUDAMFLOPS source code see 
+ http://www.roylongbottom.org.uk/linux_cuda_mflops.tar.gz
+  
+  
+
+
+
+
+
+
+
