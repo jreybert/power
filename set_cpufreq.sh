@@ -1,27 +1,42 @@
 #!/bin/bash
 
 parameter=$1
+
+cpu_num=$(grep -c processor /proc/cpuinfo)
+
+min_freq=$(cpufreq-info -l | cut -f1 -d' ')
+max_freq=$(cpufreq-info -l | cut -f2 -d' ')
+
 if [ $parameter == "max" ]
 then
   echo "Set to max"
-  sudo cpufreq-set -c 0 -g userspace
-  sudo cpufreq-set -c 0 -f 1833000
-  sudo cpufreq-set -c 1 -g userspace
-  sudo cpufreq-set -c 1 -f 1833000
+  for (( cpuid=0; cpuid<$cpu_num; cpuid++ ))
+  do
+    echo -n "CPU$cpuid "
+    sudo cpufreq-set -c $cpuid -g userspace
+    sudo cpufreq-set -c $cpuid -f $max_freq
+  done
 elif [  $parameter = "min" ]
 then
   echo "Set to min"
-  sudo cpufreq-set -c 0 -g userspace
-  sudo cpufreq-set -c 0 -f 1000000
-  sudo cpufreq-set -c 1 -g userspace
-  sudo cpufreq-set -c 1 -f 1000000
+  for (( cpuid=0; cpuid<$cpu_num; cpuid++ ))
+  do
+    echo -n "CPU$cpuid "
+    sudo cpufreq-set -c $cpuid -g userspace
+    sudo cpufreq-set -c $cpuid -f $min_freq
+  done
 elif [ $parameter = "auto" ]
 then
   echo "Set to auto"
-  sudo cpufreq-set -c 0 -g ondemand
-  sudo cpufreq-set -c 1 -g ondemand
+  for (( cpuid=0; cpuid<$cpu_num; cpuid++ ))
+  do
+    echo -n "CPU$cpuid "
+    sudo cpufreq-set -c $cpuid -g ondemand
+  done
 else
   echo "Usage: $0 [max|min|auto]"
 fi
+
+echo ""
 
 
