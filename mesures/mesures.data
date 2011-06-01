@@ -1,0 +1,13 @@
+01core_1socket 7
+02cores_1socket 6
+02cores_2socket 12
+04cores_1socket 7
+04cores_2socket 8.5
+04cores_4socket 9.25
+08cores_1socket 6.5
+08cores_2socket 7.4
+08cores_4socket 7.75
+16cores_2socket 7.12
+24cores_3socket 7
+32cores_4socket 7
+
