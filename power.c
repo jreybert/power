@@ -208,7 +208,7 @@ void main (int argc, char **argv) {
   run_command (&argv[1], &infos);
   //  summarize (outfp, output_format, command_line, &res);
   //  fflush (outfp);
-  print_infos(&infos);
+  // print_infos(&infos);
 
   if (WIFSTOPPED (infos.waitstatus))
   exit (WSTOPSIG (infos.waitstatus) + 128);

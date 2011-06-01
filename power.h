@@ -50,8 +50,8 @@ typedef struct {
   // cstates
   int nb_states;
   unsigned long long *cstates_total;
-  cstate_stat_t *cstate_stat_beg, *cstate_stat_end;
-  cstate_stat_t *cstate_trace_beg, *cstate_trace_end;
+  cstate_stat_t **cstate_stat_beg, **cstate_stat_end;
+  cstate_stat_t **cstate_trace_beg, **cstate_trace_end;
   
   int nb_freqs;
   unsigned long long *freqs_total;
