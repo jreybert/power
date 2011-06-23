@@ -22,6 +22,7 @@ typedef void (*sighandler_t)(int);
 #include <papi.h>
 #define NB_EVENTS 5
 
+
 int volatile while_watch = 1;
 
 void check_events(int *events, int nb_events) {
@@ -39,6 +40,7 @@ void check_events(int *events, int nb_events) {
     }
   }
 }
+
 
 void print_values(char events_name[NB_EVENTS][PAPI_MAX_STR_LEN], long long *values, int nb_events) {
   int i;
@@ -58,11 +60,12 @@ void name_to_code(char events_name[NB_EVENTS][PAPI_MAX_STR_LEN], int nb_events, 
 }
 void *watch_process(void* _pid) {
 
+
   pid_t pid = *((pid_t*)_pid);
   printf("%d\n", pid);
   int retval, EventSet = PAPI_NULL;
 
-  char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "UNHALTED_REFERENCE_CYCLES", "MEM_LOAD_RETIRED:L1D_HIT", "MEM_LOAD_RETIRED:L2_HIT"};//, "MEM_LOAD_RETIRED:L3_MISS"};
+  char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L1D_HIT", "MEM_LOAD_RETIRED:L2_HIT", "LLC_REFERENCES"};
   unsigned int native_events[NB_EVENTS];
   long long values[NB_EVENTS];
 
@@ -73,6 +76,18 @@ void *watch_process(void* _pid) {
     fprintf(stderr, "PAPI library init error! %d\n", err);
     exit(1);
   }
+  
+  if (PAPI_thread_init(pthread_self) != PAPI_OK) {
+    fprintf(stderr, "PAPI thread init error! %d\n", err);
+    exit(1);
+  }
+
+
+  //sched_setaffinity(0, 0);
+  //if ((retval = PAPI_set_granularity(PAPI_GRN_MAX)) != PAPI_OK) {
+  //  fprintf(stderr, "PAPI set granurality error! %d, %d, %d, %d, %d\n", retval, PAPI_EINVAL, PAPI_ENOEVST, PAPI_ENOCMP, PAPI_EISRUN);
+  //  exit(1);
+  //}
 
   // Traduction des string en code
   name_to_code(events_name, NB_EVENTS, native_events);
@@ -88,8 +103,9 @@ void *watch_process(void* _pid) {
     fprintf(stderr, "PAPI add events error!\n");
     exit(1);
   }
+
   if (PAPI_attach(EventSet, pid) != PAPI_OK)
-  exit(1);
+    exit(1);
 
   while(while_watch) {
     /* Start counting */
@@ -105,6 +121,8 @@ void *watch_process(void* _pid) {
     }
 
     print_values(events_name, values, NB_EVENTS);
+
+
   }
 
 	return 0;
@@ -125,6 +143,9 @@ static void run_command (char *const *cmd) {
     error (0, errno, "cannot run %s\n", cmd[0]);
     _exit (errno == ENOENT ? 127 : 126);
   }
+
+ // usleep(300);
+
   pthread_t tid;
   if (pthread_create(&tid, NULL, watch_process, (void * ) &pid) != 0) {
     fprintf(stderr, "pthread_create error\n");
@@ -132,7 +153,6 @@ static void run_command (char *const *cmd) {
   /* Have signals kill the child but not self (if possible).  */
   interrupt_signal = signal (SIGINT, SIG_IGN);
   quit_signal = signal (SIGQUIT, SIG_IGN);
-
   pid_t caught;
   int status;  
   /* Ignore signals, but don't ignore the children.  When wait3
@@ -141,7 +161,6 @@ static void run_command (char *const *cmd) {
     if (caught == -1)
     break;
   }
-
   while_watch=0;
 
   printf("\n");
@@ -168,20 +187,6 @@ int init_ncurses() {
     if (has_colors())
     {
         start_color();
-
-        /*
-         * Simple color assignment, often all we need.  Color pair 0 cannot
-	 * be redefined.  This example uses the same value for the color
-	 * pair as for the foreground color, though of course that is not
-	 * necessary:
-         */
-        init_pair(1, COLOR_RED,     COLOR_BLACK);
-        init_pair(2, COLOR_GREEN,   COLOR_BLACK);
-        init_pair(3, COLOR_YELLOW,  COLOR_BLACK);
-        init_pair(4, COLOR_BLUE,    COLOR_BLACK);
-        init_pair(5, COLOR_CYAN,    COLOR_BLACK);
-        init_pair(6, COLOR_MAGENTA, COLOR_BLACK);
-        init_pair(7, COLOR_WHITE,   COLOR_BLACK);
     }
 
 }
@@ -192,7 +197,7 @@ static void finish_ncurses(int sig)
 
     /* do your non-curses wrapup here */
 
-    exit(0);
+    //exit(0);
 }
 
 int main(int argc, char **argv) {

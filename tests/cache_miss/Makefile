@@ -1,5 +1,5 @@
 
-GCC=gcc -g -O0 -I../perfcount -L/usr/local/papi-4.1.1/lib -lpapi
+GCC=gcc -g -O0 -I../perfcount -L/usr/local/papi/4.1.3/lib -lpapi
 
 all: mull-unopt mull-opt acc-opt acc-unopt
 
@@ -11,12 +11,11 @@ acc-opt: access-opt.c
 	gcc -c ../perfcount/perfcount.c -o perf.o
 	$(GCC) -o $@ $< perf.o
 mull-unopt: mull-unopt.c 
-	gcc -c ../perfcount/perfcount.c -o perf.o
-	$(GCC) -o $@ $< perf.o
+	#gcc -c ../perfcount/perfcount.c -o perf.o
+	$(GCC) -o $@ $< 
 
 mull-opt: mull-opt.c 
-	gcc -c ../perfcount/perfcount.c -o perf.o
-	$(GCC) -o $@ $< perf.o
+	$(GCC) -o $@ $< 
 
 .PHONY: vtune-unopt-hotspot vtune-unopt-cache 
 	 

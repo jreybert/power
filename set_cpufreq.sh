@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ $# -lt 1 ]
+then
+  echo "Usage: $0 [max|min|auto]"
+  exit 1
+fi
+
 parameter=$1
 
 cpu_num=$(grep -c processor /proc/cpuinfo)

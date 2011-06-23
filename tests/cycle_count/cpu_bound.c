@@ -4,10 +4,12 @@
 
 #define SIZE 1024
 
-int array[SIZE];
+typedef int test_t;
+
+test_t array[SIZE];
 
 void sqrt_on_one() {
-  int n = rand();
+  test_t n = rand();
   long long t = 0;
   while(1) {
     t = sqrt(n);

@@ -1,0 +1,24 @@
+01task_01socket_01corepersoc
+ average:  478.973
+02task_01socket_02corepersoc
+ average:  479.982
+02task_02socket_01corepersoc
+ average:  480.937
+04task_01socket_04corepersoc
+ average:  481.333
+04task_02socket_02corepersoc
+ average:  482.162
+04task_04socket_01corepersoc
+ average:  485.117
+08task_01socket_08corepersoc
+ average:  488.541
+08task_02socket_04corepersoc
+ average:  489.387
+08task_04socket_02corepersoc
+ average:  491.748
+16task_02socket_08corepersoc
+ average:  503.82
+16task_04socket_04corepersoc
+ average:  504.414
+32task_04socket_08corepersoc
+ average:  524.559
