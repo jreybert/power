@@ -46,8 +46,10 @@ void print_values(char events_name[NB_EVENTS][PAPI_MAX_STR_LEN], long long *valu
   int i;
 //  printf("\r");
   for (i = 0; i < nb_events; i++) {
-    move(i,0);
-    printw("%30s : %lld ", events_name[i], values[i]);
+    move(i*2,0);
+    printw("%30s : %12lld ", events_name[i], values[i]);
+    move(i*2+1,0);
+    printw("%30s     °  °  °  °", " ", values[i]);
   }
   refresh();
 //  fflush(stdout);
