@@ -44,11 +44,11 @@ void init_counters(infos_t *infos) {
   init_freqs(infos);
 }
 
-int start_counters(infos_t *infos) {
+int start_counters(infos_t *infos, pid_t pid) {
   init_counters(infos);
   start_cstates(infos);
   start_freqs(infos);
-  start_tracing(infos);
+  start_tracing(infos, pid);
   gettimeofday (&infos->time_start, (struct timezone *) 0);  
 }
 
@@ -81,7 +81,6 @@ static void run_command (char *const *cmd, infos_t *infos) {
   pid_t pid;			/* Pid of child.  */
   sighandler_t interrupt_signal, quit_signal;
 
-  start_counters(infos);
 
   pid = fork ();		/* Run CMD as child process.  */
   if (pid < 0)
@@ -93,6 +92,7 @@ static void run_command (char *const *cmd, infos_t *infos) {
     error (0, errno, "cannot run %s", cmd[0]);
     _exit (errno == ENOENT ? 127 : 126);
   }
+  start_counters(infos, pid);
 
   /* Have signals kill the child but not self (if possible).  */
   interrupt_signal = signal (SIGINT, SIG_IGN);

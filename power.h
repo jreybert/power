@@ -3,6 +3,7 @@
 
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <papi.h>
 
 #define PATH_TO_CPU "/sys/devices/system/cpu/"
 #define MAX_LINE_LEN 255
@@ -60,7 +61,7 @@ typedef struct {
 } infos_t;
 
 // Trace functions
-int start_tracing(infos_t *infos);
+int start_tracing(infos_t *infos, pid_t pid);
 int stop_tracing();
 
 // cstates functions
@@ -78,5 +79,6 @@ void start_freqs(infos_t *infos);
 void finish_freqs(infos_t *infos);
 void print_freqs(infos_t *infos);
 
+#define NB_EVENTS 5
 
 #endif

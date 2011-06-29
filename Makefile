@@ -1,7 +1,7 @@
 
 CC=gcc 
 CFLAGS=-g -I.
-LDFLAGS=-lpthread
+LDFLAGS=-L /usr/local/papi/4.1.3/lib/ -lpapi -lpthread 
 
 #SRC=power.c cstates.c freq.c
 #OBJS=
