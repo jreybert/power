@@ -1,3 +1,6 @@
 trace_perf
 *.o
 power
+data_global.gnuplot
+data_per_core.gnuplot
+tests/linux_burn-in_apps/log0.txt

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define SIZE 128
+#define SIZE 4096
 
 typedef int test_t;
 
@@ -21,7 +21,8 @@ void sqrt_on_array() {
   int i;
   long long t = 0;
   while(1) {
-    for (i=0; i<SIZE; i++) {
+    //for (i=0; i<SIZE; i++) {
+    for (i=SIZE - 1; i >= 0 ; i--) {
       t = sqrt(array[i]);
     }
   }

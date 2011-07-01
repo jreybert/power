@@ -120,7 +120,7 @@ static void * forked_process_watching(void *arg) {
   double curr_time = 0;
   FILE *fork_file;
   char filename[128];
-  sprintf(filename, "/tmp/trace/%d", params->watched_pid);
+  sprintf(filename, "/tmp/trace/%d.proc", params->watched_pid);
   fork_file = fopen(filename, "w");
 
   int EventSet = PAPI_NULL;
@@ -193,7 +193,6 @@ static void * main_process_watching(void *arg) {
   char parent_proc_dir[128], tmp_proc_path[128];
   sprintf(parent_proc_dir, "/proc/%d/task", parent_pid);
 
-  init_trace_dir();
 
   int err;
   /* Initialize the library */
@@ -314,10 +313,9 @@ static void * energy_tracing(void *arg) {
       curr_time = glob_curr_time;
     } while ( (curr_time != glob_curr_time) && (tracing_energy != 0) );
     rc = pthread_mutex_unlock(&mutex);
+
     ipmi_watt = get_ipmi_power();
-
     fprintf(ipmi_freq_file, "%f %d ", curr_time, ipmi_watt);
-
     refresh_cstates_trace(infos);
     refresh_freqs_trace(infos);
     unsigned long long tmp;
@@ -334,14 +332,18 @@ static void * energy_tracing(void *arg) {
     }
 
     fprintf(ipmi_freq_file, "\n");
-    fflush(ipmi_freq_file);
+    if ( fflush(ipmi_freq_file) != 0 )
+      fprintf(stderr, "ipmi trace flush error");
+
 
 //    usleep(100000);
   }
-  fclose(ipmi_freq_file);
+  if ( fclose(ipmi_freq_file) != 0 )
+    fprintf(stderr, "ipmi trace close error");
 }
 
 int start_tracing(infos_t *_infos, pid_t _parent_pid) {
+  init_trace_dir();
   time_in_freq = malloc(_infos->nb_freqs * sizeof(double));
   parent_pid = _parent_pid;
   gettimeofday(&start_time, NULL);  
