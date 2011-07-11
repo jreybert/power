@@ -73,16 +73,10 @@ static int get_nb_states() {
 
 void init_cstates(infos_t *infos) {
   infos->nb_states = get_nb_states();
-  infos->cstates_total = malloc( infos->nb_cpus * sizeof(unsigned long long));
-  memset(infos->cstates_total, 0, infos->nb_cpus * sizeof(unsigned long long) );
-  infos->cstate_stat_beg = malloc( infos->nb_cpus * sizeof(cstate_stat_t*) );
-  infos->cstate_stat_end = malloc( infos->nb_cpus * sizeof(cstate_stat_t*) );
   infos->cstate_trace_beg = malloc( infos->nb_cpus * sizeof(cstate_stat_t*) );
   infos->cstate_trace_end = malloc( infos->nb_cpus * sizeof(cstate_stat_t*) );
   int cpu_id ;
   for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
-    infos->cstate_stat_beg[cpu_id] = malloc( infos->nb_states * sizeof(cstate_stat_t) );
-    infos->cstate_stat_end[cpu_id] = malloc( infos->nb_states * sizeof(cstate_stat_t) );
     infos->cstate_trace_beg[cpu_id] = malloc( infos->nb_states * sizeof(cstate_stat_t) );
     infos->cstate_trace_end[cpu_id] = malloc( infos->nb_states * sizeof(cstate_stat_t) );
   }
@@ -98,40 +92,4 @@ void refresh_cstates_trace(infos_t *infos) {
   }
 }
 
-void start_cstates(infos_t *infos) {
-  int cpu_id;
-  for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
-    get_cstate_stats(cpu_id, infos->nb_states, infos->cstate_stat_beg[cpu_id]);
-  }
-}
-
-void finish_cstates(infos_t *infos) {
-  unsigned long long time;
-  int cpu_id;
-  for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
-    get_cstate_stats(cpu_id, infos->nb_states, infos->cstate_stat_end[cpu_id]);
-  }
-
-  for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
-    int state;
-    for (state = 0; state < infos->nb_states; state++) {
-      infos->cstate_stat_beg[cpu_id][state].time = infos->cstate_stat_end[cpu_id][state].time - infos->cstate_stat_beg[cpu_id][state].time;
-      infos->cstates_total[cpu_id] += infos->cstate_stat_beg[cpu_id][state].time;
-      infos->cstate_stat_beg[cpu_id][state].usage = infos->cstate_stat_end[cpu_id][state].usage - infos->cstate_stat_beg[cpu_id][state].usage;
-    }
-  }
-}
-
-void print_cstates(infos_t *infos) {
-  printf("** C-States: **\n");
-  int cpu_id;
-  for (cpu_id = 0; cpu_id < infos->nb_cpus; cpu_id++) {
-    printf("   CPU %d: total %lld ms - %.2f%% in idle\n", cpu_id, CSTATE_IN_MS(infos->cstates_total[cpu_id]), (100.0 * CSTATE_IN_MS(infos->cstates_total[cpu_id]) / PSTATE_IN_MS(infos->freqs_total[cpu_id])));
-    int pos;
-    for (pos = 0; pos < infos->nb_states; pos++) {
-      //printf("     %5s: %.2f%% - %lld ms - %ld\n", infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].name, (100.0 * infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].time) / infos->cstates_total[cpu_id], infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].time / CSTATE_IN_MS, infos->cstate_stat_beg[cpu_id*infos->nb_states+pos].usage);
-      printf("     %5s: %.2f%% - %lld ms\n", infos->cstate_stat_beg[cpu_id][pos].name, (100.0 * infos->cstate_stat_beg[cpu_id][pos].time) / infos->cstates_total[cpu_id], CSTATE_IN_MS(infos->cstate_stat_beg[cpu_id][pos].time) );
-    }
-  }
-}
 
