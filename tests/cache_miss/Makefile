@@ -1,17 +1,15 @@
 
-GCC=gcc -g -O0 -I../perfcount -L/usr/local/papi/4.1.3/lib -lpapi
+GCC=gcc -g -O0
 
 all: mull-unopt mull-opt acc-opt acc-unopt
 
 acc-unopt: access-unopt.c 
-	gcc -c ../perfcount/perfcount.c -o perf.o
-	$(GCC) -o $@ $< perf.o
+	$(GCC) -o $@ $<
 
 acc-opt: access-opt.c 
-	gcc -c ../perfcount/perfcount.c -o perf.o
-	$(GCC) -o $@ $< perf.o
+	$(GCC) -o $@ $<
+
 mull-unopt: mull-unopt.c 
-	#gcc -c ../perfcount/perfcount.c -o perf.o
 	$(GCC) -o $@ $< 
 
 mull-opt: mull-opt.c 

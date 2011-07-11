@@ -43,7 +43,8 @@ int main(int argc, char ** argv){
   }
 
 
-	mulMat();
+  while(1)
+    mulMat();
 //  srand48(0);
   
 

@@ -21,7 +21,17 @@ void sqrt_on_array() {
   int i;
   long long t = 0;
   while(1) {
-    //for (i=0; i<SIZE; i++) {
+    for (i=0; i<SIZE; i++) {
+      t = sqrt(array[i]);
+    }
+  }
+  printf("%lld\n", t);
+}
+
+void sqrt_on_array_reverse() {
+  int i;
+  long long t = 0;
+  while(1) {
     for (i=SIZE - 1; i >= 0 ; i--) {
       t = sqrt(array[i]);
     }
@@ -43,7 +53,7 @@ int main(int argc, char ** argv) {
   int i, opt;
 
   if ( argc != 2 ) {
-    fprintf(stderr, "Usage: %s option\n\t1 : sqrt on one variable\n\t2 : sqrt on variable in array\n\t3 : sqrt on rand\n", argv[0]);
+    fprintf(stderr, "Usage: %s option\n\t1 : sqrt on one variable\n\t2 : sqrt on variable in array\n\t3 : sqrt on rand\n\t4 : sqrt on variable in array reverse\n", argv[0]);
     return 1;
   }
 
@@ -62,6 +72,9 @@ int main(int argc, char ** argv) {
       break;
     case 3:
       sqrt_on_rand();
+      break;
+    case 4:
+      sqrt_on_array_reverse();
       break;
     default:
       fprintf(stderr, "Error\n");

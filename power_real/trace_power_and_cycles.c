@@ -67,7 +67,10 @@ void *watch_process(void* _pid) {
   printf("%d\n", pid);
   int retval, EventSet = PAPI_NULL;
 
-  char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L1D_HIT", "MEM_LOAD_RETIRED:L2_HIT", "LLC_REFERENCES"};
+  //char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L1D_HIT", "MEM_LOAD_RETIRED:L2_HIT", "LLC_REFERENCES"};
+  //char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L2_HIT", "L2_RQSTS:LOADS", "L2_DATA_RQSTS:ANY"};
+  //char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "L1I:READS", "L1D_CACHE_LD:MESI", "L1D_CACHE_ST:MESI"};
+  char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "L1D_CACHE_LD:MESI", "L1D_CACHE_ST:MESI", "L2_DATA_RQSTS:ANY" };
   unsigned int native_events[NB_EVENTS];
   long long values[NB_EVENTS];
 
@@ -101,8 +104,8 @@ void *watch_process(void* _pid) {
     exit(1);
   }
 
-  if (PAPI_add_events(EventSet, native_events, NB_EVENTS) != PAPI_OK) {
-    fprintf(stderr, "PAPI add events error!\n");
+  if ( (retval = PAPI_add_events(EventSet, native_events, NB_EVENTS) ) != PAPI_OK) {
+    fprintf(stderr, "PAPI add events error!\n%s\n", PAPI_strerror(retval) );
     exit(1);
   }
 
