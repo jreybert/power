@@ -13,8 +13,15 @@ loop:
 #	movl	$1, -8(%rbp)
 #	movl	$1, -12(%rbp)
 #	movl	$1, -16(%rbp)
+  movl $1, %eax
 .L2:
-	movl	$1, -4(%rbp)
+	movl	-4(%rbp), %eax
+	movl	-4(%rbp), %eax
+	movl	-4(%rbp), %eax
+	movl	-4(%rbp), %eax
+	movl	-4(%rbp), %eax
+	movl	-4(%rbp), %eax
+	movl	-4(%rbp), %eax
 	jmp	.L2
 	.cfi_endproc
 .LFE0:

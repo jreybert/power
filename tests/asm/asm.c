@@ -1,12 +1,17 @@
+int array[262144];
 
 void loop() {
-  int i,j,k,l;  
-  i = 1;
-  j = 1;
-  k = 1;
-  l = 1;
+  int i, j, offset;
   while(1) {
-    j = i + k;
+    for (j = 511; j >= 0; j--) {
+    offset = j * 64;
+    i = array[0 + offset];
+    i = array[8192 + offset];
+    i = array[16384 + offset];
+    i = array[24576 + offset];
+
+    }
+    
   }
 }
 
