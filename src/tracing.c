@@ -20,6 +20,8 @@
 
 #include "power.h"
 
+extern char **events_name;
+extern double *events_weight;
 
 static volatile int tracing_energy, tracing_process;
 
@@ -129,7 +131,9 @@ static void refresh_children_list() {
         watched_processes[j].is_thread = 0;
         sprintf(watched_processes[j].output_path, "/tmp/trace/%d.proc", curr_pid);
         watched_processes[j].output_file = fopen(watched_processes[j].output_path, "w");
-        fprintf(watched_processes[j].output_file, "# time unh_core_cycle inst_retired L1_misses L2_misses LLC_misses core_used\n");
+//        fprintf(watched_processes[j].output_file, "# time unh_core_cycle inst_retired L1_misses L2_misses LLC_misses core_used\n");
+        fprintf(watched_processes[j].output_file, "# time %s %s %s %s %s core_used\n", events_name[0], events_name[1], events_name[2], events_name[3], events_name[4]); 
+        fprintf(watched_processes[j].output_file, "# weight %f %f %f %f %f\n", events_weight[0], events_weight[1], events_weight[2], events_weight[3], events_weight[4]); 
         watched_processes[j].event_set = PAPI_NULL;
         papi_init_eventset(curr_pid, &watched_processes[j].event_set);
         nb_proc_watched++;
@@ -155,7 +159,9 @@ static void refresh_children_list() {
       watched_processes[j].is_thread = 1;
       sprintf(watched_processes[j].output_path, "/tmp/trace/%d.proc", curr_tid);
       watched_processes[j].output_file = fopen(watched_processes[j].output_path, "w");
-      fprintf(watched_processes[j].output_file, "# time unh_core_cycle inst_retired L1_misses L2_misses LLC_misses core_used\n");
+      //fprintf(watched_processes[j].output_file, "# time unh_core_cycle inst_retired L1_misses L2_misses LLC_misses core_used\n");
+      fprintf(watched_processes[j].output_file, "# time %s %s %s %s %s core_used\n", events_name[0], events_name[1], events_name[2], events_name[3], events_name[4]); 
+      fprintf(watched_processes[j].output_file, "# weight %f %f %f %f %f\n", events_weight[0], events_weight[1], events_weight[2], events_weight[3], events_weight[4]); 
       watched_processes[j].event_set = PAPI_NULL;
       papi_init_eventset(curr_tid, &watched_processes[j].event_set);
       nb_proc_watched++;
