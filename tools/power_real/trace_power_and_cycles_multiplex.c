@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include <pthread.h>
 #include <sys/types.h>
@@ -8,6 +7,8 @@
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <limits.h>
 
 #include <signal.h>
@@ -19,25 +20,17 @@ typedef void (*sighandler_t)(int);
 
 
 #include <papi.h>
-#define NB_EVENTS 5
-#define INPUT_FILE "papi_counters"
-
-//char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L1D_HIT", "MEM_LOAD_RETIRED:L2_HIT", "LLC_REFERENCES"};
-//char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L2_HIT", "L2_RQSTS:LOADS", "L2_DATA_RQSTS:ANY"};
-//char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "L1I:READS", "L1D_CACHE_LD:MESI", "L1D_CACHE_ST:MESI"};
-//char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "L1D_CACHE_LD:MESI", "L1D_CACHE_ST:MESI", "L2_DATA_RQSTS:ANY" };
-char events_name_defaults[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "BR_INST_RETIRED:ALL_BRANCHES", "BR_INST_EXEC:ANY", "BR_MISP_EXEC:ANY" };
-
+#define NB_EVENTS 11
 
 
 int volatile while_watch = 1;
 
 void check_events(int *events, int nb_events) {
   int i;
-  if ( nb_events > PAPI_num_counters() ) {
-    fprintf(stderr, "Too many counters: %d\nMaximum available %d\n", nb_events, PAPI_num_counters());
-    exit(1);
-  }
+  //if ( nb_events > PAPI_num_counters() ) {
+  //  fprintf(stderr, "Too many counters: %d\nMaximum available %d\n", nb_events, PAPI_num_counters());
+  //  exit(1);
+  //}
   for (i=0; i < nb_events; i++) {
     if (PAPI_query_event(events[i]) != PAPI_OK) {
       PAPI_event_info_t info;
@@ -49,7 +42,7 @@ void check_events(int *events, int nb_events) {
 }
 
 
-void print_values(char **events_name, long long *values, int nb_events) {
+void print_values(char events_name[NB_EVENTS][PAPI_MAX_STR_LEN], long long *values, int nb_events) {
   int i;
 //  printf("\r");
   for (i = 0; i < nb_events; i++) {
@@ -62,50 +55,25 @@ void print_values(char **events_name, long long *values, int nb_events) {
 //  fflush(stdout);
 }
 
-void name_to_code(char **events_name, int nb_events, int *events_code) {
+void name_to_code(char events_name[NB_EVENTS][PAPI_MAX_STR_LEN], int nb_events, int *events_code) {
   int i;
   for (i=0; i < nb_events; i++)
     PAPI_event_name_to_code(events_name[i], &events_code[i]);
 }
-
 void *watch_process(void* _pid) {
+
 
   pid_t pid = *((pid_t*)_pid);
   printf("%d\n", pid);
   int retval, EventSet = PAPI_NULL;
-  int i;
+
+  //char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L1D_HIT", "MEM_LOAD_RETIRED:L2_HIT", "LLC_REFERENCES"};
+  //char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L2_HIT", "L2_RQSTS:LOADS", "L2_DATA_RQSTS:ANY"};
+  //char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "L1I:READS", "L1D_CACHE_LD:MESI", "L1D_CACHE_ST:MESI"};
+  //char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "L1D_CACHE_LD:MESI", "L1D_CACHE_ST:MESI", "L2_DATA_RQSTS:ANY" };
+  char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "L1I:READS", "L1D_CACHE_LD:MESI", "L1D_CACHE_ST:MESI", "MEM_LOAD_RETIRED:L2_HIT", "L2_RQSTS:LOADS", "L2_DATA_RQSTS:ANY", "BR_INST_RETIRED:ALL_BRANCHES", "BR_INST_EXEC:ANY", "BR_MISP_EXEC:ANY" };
   unsigned int native_events[NB_EVENTS];
   long long values[NB_EVENTS];
-
-  char **events_name = malloc( sizeof(char*) * NB_EVENTS );
-  for (i = 0; i < NB_EVENTS; i++) {
-    events_name[i] = malloc( sizeof(char) * PAPI_MAX_STR_LEN );
-  }
-
-  static const char filename[] = INPUT_FILE;
-  FILE *file = fopen ( filename, "r" );
-  if ( file != NULL ) {
-    printf("Use \'"INPUT_FILE"\' file for PAPI counters\n");
-    char line [ PAPI_MAX_STR_LEN ]; 
-
-    for (i = 0; i < NB_EVENTS; i++) {
-      fgets (line, sizeof(line), file );
-      int cch = strlen(line);
-      if (cch > 1 && line[cch-1] == '\n')
-        line[cch-1] = '\0';
-
-//      printf("-%s-\n", line);
-      strcpy(events_name[i], line);
-    }
-    fclose ( file );
-  }
-  else {
-    printf("Can't find \'"INPUT_FILE"\' file, use default PAPI counters\n");
-    for (i = 0; i < NB_EVENTS; i++) {
-      strcpy(events_name[i], events_name_defaults[i]);
-    }
-
-  }
 
 
   int err;
@@ -114,6 +82,12 @@ void *watch_process(void* _pid) {
     fprintf(stderr, "PAPI library init error! %d\n", err);
     exit(1);
   }
+
+  if ( (err = PAPI_multiplex_init()) != PAPI_OK) {
+    fprintf(stderr, "PAPI multiplex init error! %d\n", err);
+    exit(1);
+  }
+
   
   if (PAPI_thread_init(pthread_self) != PAPI_OK) {
     fprintf(stderr, "PAPI thread init error! %d\n", err);
@@ -134,6 +108,16 @@ void *watch_process(void* _pid) {
   
   if (PAPI_create_eventset(&EventSet) != PAPI_OK) {    
     fprintf(stderr, "PAPI EventSet init error!\n");
+    exit(1);
+  }
+
+  if ( (err = PAPI_assign_eventset_component( EventSet, 0 ) ) != PAPI_OK ) {
+    fprintf(stderr, "PAPI assign component error!\n%s\n", PAPI_strerror(err));
+    exit(1);
+  }
+
+  if ( ( err = PAPI_set_multiplex(EventSet) ) != PAPI_OK) {    
+    fprintf(stderr, "PAPI set multiplex error!\n%s\n", PAPI_strerror(err));
     exit(1);
   }
 
