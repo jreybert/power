@@ -1,7 +1,7 @@
 
 CC=gcc 
 CFLAGS=-g -I.
-LDFLAGS=-L $(PAPI_ROOT)/lib/ -lpapi -lpthread 
+LDFLAGS=-L $(PAPI_ROOT)/lib/ -lpapi -lpthread -lsensors
 
 #SRC=power.c cstates.c freq.c
 #OBJS=

@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <limits.h>
+#include <pwd.h>
 
 #include <signal.h>
 typedef void (*sighandler_t)(int);
@@ -20,7 +21,8 @@ typedef void (*sighandler_t)(int);
 
 #include <papi.h>
 #define NB_EVENTS 5
-#define INPUT_FILE "papi_counters"
+#define INPUT_FILE ".power/papi_counters"
+
 
 //char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L1D_HIT", "MEM_LOAD_RETIRED:L2_HIT", "LLC_REFERENCES"};
 //char events_name[NB_EVENTS][PAPI_MAX_STR_LEN] = {"UNHALTED_CORE_CYCLES", "INSTRUCTION_RETIRED", "MEM_LOAD_RETIRED:L2_HIT", "L2_RQSTS:LOADS", "L2_DATA_RQSTS:ANY"};
@@ -82,30 +84,35 @@ void *watch_process(void* _pid) {
     events_name[i] = malloc( sizeof(char) * PAPI_MAX_STR_LEN );
   }
 
-  static const char filename[] = INPUT_FILE;
+  char *user = getenv("USER");
+  struct passwd *p = getpwnam(user);
+  char filename[256];
+  sprintf(filename, "%s/%s", p->pw_dir, INPUT_FILE);
+
   FILE *file = fopen ( filename, "r" );
   if ( file != NULL ) {
-    printf("Use \'"INPUT_FILE"\' file for PAPI counters\n");
+    printf("Use \'%s\' file for PAPI counters\n", filename);
     char line [ PAPI_MAX_STR_LEN ]; 
 
     for (i = 0; i < NB_EVENTS; i++) {
-      fgets (line, sizeof(line), file );
-      int cch = strlen(line);
-      if (cch > 1 && line[cch-1] == '\n')
-        line[cch-1] = '\0';
-
-//      printf("-%s-\n", line);
-      strcpy(events_name[i], line);
+//      fgets (line, sizeof(line), file );
+//      int cch = strlen(line);
+//      if (cch > 1 && line[cch-1] == '\n')
+//        line[cch-1] = '\0';
+      float tmp;
+      fscanf(file, "%s %f\n", events_name[i], &tmp);
+      printf("%s\n", events_name[i]);
+//      strcpy(events_name[i], line);
     }
     fclose ( file );
   }
   else {
-    printf("Can't find \'"INPUT_FILE"\' file, use default PAPI counters\n");
+    printf("Can't find \'%s\' file, use default PAPI counters\n", filename);
     for (i = 0; i < NB_EVENTS; i++) {
       strcpy(events_name[i], events_name_defaults[i]);
     }
-
   }
+
 
 
   int err;

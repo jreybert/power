@@ -1,0 +1,13 @@
+asm_mov_l1_r
+asm_mov_l1_w
+asm_mov_l2
+asm_mov_r
+asm_mov_w
+branch/branch_1100m
+branch/branch_140m
+branch/branch_1m
+branch/branch_250m
+branch/branch_40m
+branch/branch_500m
+branch/papi_counters
+

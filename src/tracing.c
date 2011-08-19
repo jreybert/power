@@ -21,7 +21,7 @@
 #include "power.h"
 
 extern char **events_name;
-extern double *events_weight;
+extern float *events_weight;
 
 static volatile int tracing_energy, tracing_process;
 
@@ -56,6 +56,18 @@ int get_ipmi_power() {
   fscanf(f_cmd, "%d", &power_value);
   pclose(f_cmd);
   return power_value;
+}
+
+
+static FILE* init_temp_file() {
+  FILE *temp_file = fopen(TEMP_PATH, "w");
+
+  if (temp_file == NULL) {
+//    fprintf(stderr, "Cannot open /tmp/trace/ipmi_freq\n");
+    perror("Cannot open "TEMP_PATH"\n");
+  }
+  fprintf(temp_file, "# time temp_core_1 temp_core_2 ... \n");
+  return temp_file;
 }
 
 static FILE* init_energy_stat_file() {
@@ -189,6 +201,9 @@ static void * main_process_watching(void *arg) {
   FILE* freq_stat_file = init_energy_stat_file();
   refresh_energy_stat(infos, &ipmi_watt);
   
+  FILE* temp_file = init_temp_file();
+  print_temp_values(temp_file, 0);
+
   while(tracing_energy) {
 
     refresh_children_list();
@@ -214,6 +229,8 @@ static void * main_process_watching(void *arg) {
     refresh_energy_stat(infos, &ipmi_watt);
     get_energy_stat(infos, ipmi_watt, glob_curr_time, freq_stat_file);
 
+    print_temp_values(temp_file, glob_curr_time);
+
 // Stop all the counters and get values
     for (i = 0; i < nb_proc_watched; i++) {
       if (PAPI_stop(watched_processes[i].event_set, values) != PAPI_OK) {
@@ -230,11 +247,14 @@ static void * main_process_watching(void *arg) {
   }
   if ( fclose(freq_stat_file) != 0 )
     perror("ipmi trace close error");
+  if ( fclose(temp_file) != 0 )
+    perror("temp trace close error");
 }
 
 int start_tracing(infos_t *_infos, pid_t _parent_pid) {
   papi_global_init();
   init_trace_dir();
+  my_init_sensors();
   parent_pid = _parent_pid;
   gettimeofday(&start_time, NULL);  
   infos = _infos;
