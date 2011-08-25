@@ -10,7 +10,7 @@
 #define MAX_PROC_WATCHED 128
 #define TRACE_DIR "/tmp/trace"
 #define FREQ_STAT_PATH TRACE_DIR"/freq_stat"
-#define TEMP_PATH TRACE_DIR"/temp_stat"
+#define HW_FILE_PATH TRACE_DIR"/hw_stat"
 
 #define PATH_TO_CPU "/sys/devices/system/cpu/"
 #define MAX_LINE_LEN 255

@@ -46,12 +46,12 @@ void my_init_sensors() {
   }
 }
 
-void print_temp_values(FILE *file, double time) {
+void print_temp_values(FILE *file, int ipmi_watt, double time) {
   
   int i, err;
   double val;
   
-  fprintf(file, "%f ", time);
+  fprintf(file, "%f %d ", time, ipmi_watt);
   for (i = 0; i < nb_temp_sensors; i++) {
     if ((err = sensors_get_value(&temp_sensors[i].chip_name, temp_sensors[i].subfeature.number, &val)))
     fprintf(stderr, "ERROR: Can't get value of subfeature %s: %s\n", temp_sensors[i].subfeature.name, sensors_strerror(err));

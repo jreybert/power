@@ -20,12 +20,15 @@
 
 #include "power.h"
 
+#define NB_WATCHING_FUNC 3
+
 extern char **events_name;
 extern float *events_weight;
 
-static volatile int tracing_energy, tracing_process;
+static volatile int tracing_hw;
+static volatile int tracing_process;
 
-pthread_t tid[2];
+pthread_t tid[NB_WATCHING_FUNC];
 FILE *trace;
 struct timeval start_time;
 
@@ -59,15 +62,15 @@ int get_ipmi_power() {
 }
 
 
-static FILE* init_temp_file() {
-  FILE *temp_file = fopen(TEMP_PATH, "w");
+static FILE* init_hardware_file() {
+  FILE *hw_file = fopen(HW_FILE_PATH, "w");
 
-  if (temp_file == NULL) {
+  if (hw_file == NULL) {
 //    fprintf(stderr, "Cannot open /tmp/trace/ipmi_freq\n");
-    perror("Cannot open "TEMP_PATH"\n");
+    perror("Cannot open "HW_FILE_PATH"\n");
   }
-  fprintf(temp_file, "# time temp_core_1 temp_core_2 ... \n");
-  return temp_file;
+  fprintf(hw_file, "# time temp_core_1 temp_core_2 ... \n");
+  return hw_file;
 }
 
 static FILE* init_energy_stat_file() {
@@ -81,10 +84,10 @@ static FILE* init_energy_stat_file() {
   return freq_stat_file;
 }
 
-static void refresh_energy_stat(infos_t *infos, int *ipmi_watt) {
+static void refresh_energy_stat(infos_t *infos, int *ipmi_power) {
   refresh_cstates_trace(infos);
   refresh_freqs_trace(infos);
-  *ipmi_watt = get_ipmi_power();
+  *ipmi_power = get_ipmi_power();
 }
 
 static void get_energy_stat(infos_t *infos, int ipmi_watt, double curr_time, FILE *freq_stat_file) {
@@ -181,35 +184,81 @@ static void refresh_children_list() {
   }
 }
 
+static void * watch_hardware(void * arg) {
+  
+  int ipmi_watt;
+  int sleep_time = 1000000;
+  double local_curr_time, tracing_time;
+  
+  struct timeval tracing_tod_beg;
+  struct timeval tracing_tod_end;
+  struct timeval local_tod_time;
+
+  gettimeofday(&tracing_tod_beg, NULL);
+
+
+  FILE* hw_file = init_hardware_file();
+
+  ipmi_watt = get_ipmi_power();
+
+  gettimeofday(&local_tod_time, NULL);
+  local_curr_time = TDIFF(local_tod_time, start_time);
+  print_temp_values(hw_file, ipmi_watt, local_curr_time);    
+  
+  gettimeofday(&tracing_tod_end, NULL);
+
+  while (tracing_hw) {
+    gettimeofday(&tracing_tod_end, NULL);
+    tracing_time = TDIFF(tracing_tod_end, tracing_tod_beg);
+    
+    usleep(sleep_time - tracing_time * 1000000);
+
+    gettimeofday(&tracing_tod_beg, NULL);
+    gettimeofday(&local_tod_time, NULL);
+    local_curr_time = TDIFF(local_tod_time, start_time);
+
+    ipmi_watt = get_ipmi_power();
+    print_temp_values(hw_file, ipmi_watt, local_curr_time);    
+
+  }
+  if ( fclose(hw_file) != 0 )
+    perror("temp trace close error");
+
+}
+
+static void * check_new_children(void *arg) {
+  while(tracing_process) {
+    refresh_children_list();
+    usleep(1000000);
+  }
+}
+
 static void * main_process_watching(void *arg) {
-
-
   long long values[NB_EVENTS];
   int ppid, proc_id;
-  int ipmi_watt;
   int i, err;
+  int ipmi_watt;
 
   int sleep_time = 1000000;
   double tracing_time = 0;
   struct timeval tracing_tod_beg;
   struct timeval tracing_tod_end;
 
+  papi_thread_init();
+
   gettimeofday(&tracing_tod_beg, NULL);
 
-  papi_thread_init();
-  
   FILE* freq_stat_file = init_energy_stat_file();
   refresh_energy_stat(infos, &ipmi_watt);
-  
-  FILE* temp_file = init_temp_file();
-  print_temp_values(temp_file, 0);
 
-  while(tracing_energy) {
+  refresh_children_list();
 
-    refresh_children_list();
+  while(tracing_process) {
+
+    int local_nb_proc_watched = nb_proc_watched;
 
 // Start the counters
-    for (i = 0; i < nb_proc_watched; i++) {
+    for (i = 0; i < local_nb_proc_watched; i++) {
       if (PAPI_start(watched_processes[i].event_set) != PAPI_OK) {
         fprintf(stderr, "PAPI start error!\n");
       }
@@ -229,10 +278,10 @@ static void * main_process_watching(void *arg) {
     refresh_energy_stat(infos, &ipmi_watt);
     get_energy_stat(infos, ipmi_watt, glob_curr_time, freq_stat_file);
 
-    print_temp_values(temp_file, glob_curr_time);
+    //print_temp_values(hw_file, glob_curr_time);
 
 // Stop all the counters and get values
-    for (i = 0; i < nb_proc_watched; i++) {
+    for (i = 0; i < local_nb_proc_watched; i++) {
       if (PAPI_stop(watched_processes[i].event_set, values) != PAPI_OK) {
         fprintf(stderr, "PAPI stop error!\n");
       }
@@ -247,26 +296,41 @@ static void * main_process_watching(void *arg) {
   }
   if ( fclose(freq_stat_file) != 0 )
     perror("ipmi trace close error");
-  if ( fclose(temp_file) != 0 )
-    perror("temp trace close error");
 }
 
-int start_tracing(infos_t *_infos, pid_t _parent_pid) {
+int init_global_tracing(infos_t *_infos) {
+  infos = _infos;
   papi_global_init();
   init_trace_dir();
   my_init_sensors();
-  parent_pid = _parent_pid;
   gettimeofday(&start_time, NULL);  
-  infos = _infos;
-  tracing_energy = 1;
-  tracing_process = 1;
-  pthread_create(&tid[1], NULL, main_process_watching, NULL);
 }
 
-int stop_tracing() {
-  tracing_energy = 0;
-  gettimeofday(&glob_tod_time, NULL);
-  glob_curr_time = TDIFF(glob_tod_time, start_time);
-  tracing_process = 0;
+
+int stop_global_tracing() {
   pthread_join(tid[1], NULL);
+  pthread_join(tid[2], NULL);
+  pthread_join(tid[0], NULL);
+}
+
+int init_hw_tracing() {
+  tracing_hw = 1;
+  pthread_create(&tid[0], NULL, watch_hardware, NULL);
+}
+
+int stop_hw_tracing() {
+  tracing_hw = 0;
+}
+
+int start_proc_tracing(pid_t _parent_pid) {
+  parent_pid = _parent_pid;
+  tracing_process = 1;
+  pthread_create(&tid[1], NULL, main_process_watching, NULL);
+  pthread_create(&tid[2], NULL, check_new_children, NULL);
+}
+
+int stop_proc_tracing() {
+  tracing_process = 0;
+  gettimeofday(&glob_tod_time, NULL);
+  //glob_curr_time = TDIFF(glob_tod_time, start_time);
 }

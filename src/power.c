@@ -45,8 +45,7 @@ void init_counters(infos_t *infos) {
 }
 
 int start_counters(infos_t *infos, pid_t pid) {
-  init_counters(infos);
-  start_tracing(infos, pid);
+  start_proc_tracing(pid);
   gettimeofday (&infos->time_start, (struct timezone *) 0);  
 }
 
@@ -59,7 +58,7 @@ int end_counters(pid_t pid, infos_t *infos) {
     if (caught == -1)
     return 0;
   }
-  stop_tracing();
+  stop_proc_tracing();
   gettimeofday (&infos->time_elapsed, (struct timezone *) 0);
   infos->time_elapsed.tv_sec -= infos->time_start.tv_sec;
   if (infos->time_elapsed.tv_usec < infos->time_start.tv_usec)
@@ -70,6 +69,14 @@ int end_counters(pid_t pid, infos_t *infos) {
     }
   infos->time_elapsed.tv_usec -= infos->time_start.tv_usec;
   infos->waitstatus = status;
+
+  printf("Watched process have finished, now get values for 4 more seconds\n");
+  usleep(4000000);
+  stop_hw_tracing();
+
+  stop_global_tracing();
+  
+  
   return 1;
 }
 
@@ -77,6 +84,15 @@ static void run_command (char *const *cmd, infos_t *infos) {
   pid_t pid;			/* Pid of child.  */
   sighandler_t interrupt_signal, quit_signal;
 
+  init_counters(infos);
+
+  init_global_tracing(infos);
+
+  init_hw_tracing();
+
+  printf("Get values for 4 seconds\n");
+  usleep(4000000);
+  printf("Watched process now starts\n\n");
 
   pid = fork ();		/* Run CMD as child process.  */
   if (pid < 0)
