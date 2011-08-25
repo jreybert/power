@@ -14,10 +14,7 @@ typedef void (*sighandler_t)(int);
 
 #include "power.h"
 
-// options
-int opt_is_verbose = 0;
-int opt_is_extended = 0;
-
+config_t global_config;
 
 int get_options(int argc, char **argv) {
   int flags, opt;
@@ -25,7 +22,7 @@ int get_options(int argc, char **argv) {
   while ((opt = getopt(argc, argv, "v-")) != -1) {
     switch (opt) {
       case 'v':
-        opt_is_verbose = 1;
+        global_config.verbose = 1;
         break;
       case '-':
         return opt;
@@ -38,7 +35,7 @@ int get_options(int argc, char **argv) {
   return opt;
 }
 
-void init_counters(infos_t *infos) {
+void init_cstates_and_freqs(infos_t *infos) {
   infos->nb_cpus = sysconf( _SC_NPROCESSORS_ONLN );
   init_cstates(infos);
   init_freqs(infos);
@@ -70,8 +67,10 @@ int end_counters(pid_t pid, infos_t *infos) {
   infos->time_elapsed.tv_usec -= infos->time_start.tv_usec;
   infos->waitstatus = status;
 
-  printf("Watched process have finished, now get values for 4 more seconds\n");
-  usleep(4000000);
+  printf("Watched process have finished, now get values for %.0f more seconds\n", global_config.nb_seconds_end);
+
+  usleep((int) (global_config.nb_seconds_end * 1000000) );
+
   stop_hw_tracing();
 
   stop_global_tracing();
@@ -84,14 +83,16 @@ static void run_command (char *const *cmd, infos_t *infos) {
   pid_t pid;			/* Pid of child.  */
   sighandler_t interrupt_signal, quit_signal;
 
-  init_counters(infos);
+  init_cstates_and_freqs(infos);
 
   init_global_tracing(infos);
 
   init_hw_tracing();
 
-  printf("Get values for 4 seconds\n");
-  usleep(4000000);
+  printf("Get values for %.0f seconds\n", global_config.nb_seconds_beg);
+
+  usleep((int) (global_config.nb_seconds_beg * 1000000) );
+
   printf("Watched process now starts\n\n");
 
   pid = fork ();		/* Run CMD as child process.  */
@@ -213,6 +214,9 @@ void main (int argc, char **argv) {
   const char **command_line;
 
   infos_t infos;
+  papi_global_init();
+  init_trace_dir();
+  read_conf_file();
 
 //  int nb_args = get_options (argc, argv);
   run_command (&argv[1], &infos);

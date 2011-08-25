@@ -17,7 +17,9 @@
 #define SYSFS_PATH_MAX 255
 #define MAX_CSTATE_NAME 255
 
-#define NB_EVENTS 5
+#define MAX_EVENTS 5
+
+#define CONFIG_FILE_PATH ".power/config"
 
 typedef struct {
   char name[MAX_CSTATE_NAME];
@@ -48,6 +50,25 @@ typedef struct {
   time_in_freq_t **time_in_freq_trace_beg, **time_in_freq_trace_end;
 } infos_t;
 
+typedef struct {
+
+  // PAPI config
+  size_t nb_papi_events;
+  char **events_name;
+  float events_weight[MAX_EVENTS];
+  unsigned int native_events[MAX_EVENTS];
+  
+  // Global power config
+  int verbose;
+  int use_ipmi, use_sensors;
+  double refresh_rate;
+  double nb_seconds_beg, nb_seconds_end;
+  char *output_dir;
+} config_t;
+// must be declared in main c file, let say power.c
+extern config_t global_config;
+
+
 // Trace functions
 int start_tracing(infos_t *infos, pid_t pid);
 int stop_tracing();
@@ -60,6 +81,5 @@ void refresh_cstates_trace(infos_t *infos);
 // freqs functions
 void init_freqs(infos_t *infos);
 void refresh_freqs_trace(infos_t *infos);
-
 
 #endif

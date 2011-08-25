@@ -22,8 +22,6 @@
 
 #define NB_WATCHING_FUNC 3
 
-extern char **events_name;
-extern float *events_weight;
 
 static volatile int tracing_hw;
 static volatile int tracing_process;
@@ -54,10 +52,12 @@ int nb_proc_watched=0;
 watched_param_t watched_processes[MAX_PROC_WATCHED];
 
 int get_ipmi_power() {
-  int power_value;
-  FILE *f_cmd = popen("sudo ipmi-oem Dell get-instantaneous-power-consumption-data 0 | head -n 1 | cut -f4 -d' '", "r");
-  fscanf(f_cmd, "%d", &power_value);
-  pclose(f_cmd);
+  int power_value = 0;
+  if ( global_config.use_ipmi ) {
+    FILE *f_cmd = popen("sudo ipmi-oem Dell get-instantaneous-power-consumption-data 0 | head -n 1 | cut -f4 -d' '", "r");
+    fscanf(f_cmd, "%d", &power_value);
+    pclose(f_cmd);
+  }
   return power_value;
 }
 
@@ -147,8 +147,16 @@ static void refresh_children_list() {
         sprintf(watched_processes[j].output_path, "/tmp/trace/%d.proc", curr_pid);
         watched_processes[j].output_file = fopen(watched_processes[j].output_path, "w");
 //        fprintf(watched_processes[j].output_file, "# time unh_core_cycle inst_retired L1_misses L2_misses LLC_misses core_used\n");
-        fprintf(watched_processes[j].output_file, "# time %s %s %s %s %s core_used\n", events_name[0], events_name[1], events_name[2], events_name[3], events_name[4]); 
-        fprintf(watched_processes[j].output_file, "# weight %f %f %f %f %f\n", events_weight[0], events_weight[1], events_weight[2], events_weight[3], events_weight[4]); 
+        int k;
+        fprintf(watched_processes[j].output_file, "# time ");
+        for (k = 0; k < global_config.nb_papi_events; k++)
+          fprintf(watched_processes[j].output_file, "%s ", global_config.events_name[k]);
+        fprintf(watched_processes[j].output_file, "core_used\n"); 
+        fprintf(watched_processes[j].output_file, "# weight ");
+        for (k = 0; k < global_config.nb_papi_events; k++) 
+          fprintf(watched_processes[j].output_file, "%f ", global_config.events_weight[k]);
+        fprintf(watched_processes[j].output_file, "\n");
+
         watched_processes[j].event_set = PAPI_NULL;
         papi_init_eventset(curr_pid, &watched_processes[j].event_set);
         nb_proc_watched++;
@@ -175,8 +183,16 @@ static void refresh_children_list() {
       sprintf(watched_processes[j].output_path, "/tmp/trace/%d.proc", curr_tid);
       watched_processes[j].output_file = fopen(watched_processes[j].output_path, "w");
       //fprintf(watched_processes[j].output_file, "# time unh_core_cycle inst_retired L1_misses L2_misses LLC_misses core_used\n");
-      fprintf(watched_processes[j].output_file, "# time %s %s %s %s %s core_used\n", events_name[0], events_name[1], events_name[2], events_name[3], events_name[4]); 
-      fprintf(watched_processes[j].output_file, "# weight %f %f %f %f %f\n", events_weight[0], events_weight[1], events_weight[2], events_weight[3], events_weight[4]); 
+      int k;
+      fprintf(watched_processes[j].output_file, "# time ");
+      for (k = 0; k < global_config.nb_papi_events; k++)
+        fprintf(watched_processes[j].output_file, "%s ", global_config.events_name[k]);
+      fprintf(watched_processes[j].output_file, "core_used\n"); 
+      fprintf(watched_processes[j].output_file, "# weight ");
+      for (k = 0; k < global_config.nb_papi_events; k++) 
+        fprintf(watched_processes[j].output_file, "%f ", global_config.events_weight[k]);
+      fprintf(watched_processes[j].output_file, "\n");
+
       watched_processes[j].event_set = PAPI_NULL;
       papi_init_eventset(curr_tid, &watched_processes[j].event_set);
       nb_proc_watched++;
@@ -187,7 +203,7 @@ static void refresh_children_list() {
 static void * watch_hardware(void * arg) {
   
   int ipmi_watt;
-  int sleep_time = 1000000;
+  int sleep_time = (int) (global_config.refresh_rate * 1000000.0);
   double local_curr_time, tracing_time;
   
   struct timeval tracing_tod_beg;
@@ -234,12 +250,12 @@ static void * check_new_children(void *arg) {
 }
 
 static void * main_process_watching(void *arg) {
-  long long values[NB_EVENTS];
+  long long values[MAX_EVENTS];
   int ppid, proc_id;
   int i, err;
   int ipmi_watt;
 
-  int sleep_time = 1000000;
+  int sleep_time = (int) (global_config.refresh_rate * 1000000.0);
   double tracing_time = 0;
   struct timeval tracing_tod_beg;
   struct timeval tracing_tod_end;
@@ -300,14 +316,13 @@ static void * main_process_watching(void *arg) {
 
 int init_global_tracing(infos_t *_infos) {
   infos = _infos;
-  papi_global_init();
-  init_trace_dir();
-  my_init_sensors();
   gettimeofday(&start_time, NULL);  
 }
 
 
 int stop_global_tracing() {
+  tracing_hw = 0;
+  tracing_process = 0;
   pthread_join(tid[1], NULL);
   pthread_join(tid[2], NULL);
   pthread_join(tid[0], NULL);
@@ -315,6 +330,7 @@ int stop_global_tracing() {
 
 int init_hw_tracing() {
   tracing_hw = 1;
+  my_init_sensors();
   pthread_create(&tid[0], NULL, watch_hardware, NULL);
 }
 

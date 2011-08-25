@@ -1,8 +1,12 @@
-#include <sensors/sensors.h>
-#include <sensors/error.h>
 #include <string.h>
 #include <stdlib.h>
 
+#include "power.h"
+
+#ifdef COMPILE_WITH_SENSORS
+
+#include <sensors/sensors.h>
+#include <sensors/error.h>
 #define MAX_CHIPS   16
 #define MAX_SENSORS MAX_CHIPS * 8
 // sensors_chip_name *chips[MAX_CHIPS] = { 0 };
@@ -62,4 +66,10 @@ void print_temp_values(FILE *file, int ipmi_watt, double time) {
   }
   fprintf(file, "\n");
 }
-
+#else
+void print_temp_values(FILE *file, int ipmi_watt, double time) {
+  fprintf(file, "%f %d 0\n", time, ipmi_watt);
+}
+void my_init_sensors() {
+}
+#endif
